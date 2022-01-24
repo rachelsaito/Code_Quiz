@@ -1,166 +1,196 @@
-var question1 = {
-    Qtitle: "What language is this page using for logic?",
-    optionA: "A",
-    optionB: "B",
-    optionC: "C",
-    optionD: "D",
-    correctAnswer: "A"
+// variables to keep track of quiz 
+var currentQuestionIndex = 0;
+var time = questions.length * 15;
+var timerId;
+
+// variables to reference DOM elements
+var questionsEl = document.getElementById("questions");
+var timerEl = document.getElementById("time");
+var choicesEl = document.getElementById("choices");
+var submitBtn = document.getElementById("submit");
+var startBtn = document.getElementById("start");
+var initialsEl = document.getElementById("initials");
+var feedbackEl = document.getElementById("feedback");
+
+function startQuiz() {
+  // hide start screen
+  var startScreenEl = document.getElementById("start-screen");
+  startScreenEl.setAttribute("class", "hide");
+
+  // un-hide questions section
+  questionsEl.removeAttribute("class");
+
+  // start timer
+  timerId = setInterval(clockTick, 1000);
+
+  // show starting time
+  timerEl.textContent = time;
+
+  getQuestion();
 }
 
-var question2 = {
-Qtitle: "What language is used for styling web pages?",
-    optionA: "Apple",
-    optionB: "CSS",
-    optionC: "Bootstrap",
-    optionD: "HTML",
-    correctAnswer: "B"
+function getQuestion() {
+  // get current question object from array
+  var currentQuestion = questions[currentQuestionIndex];
+
+  // update title with current question
+  var titleEl = document.getElementById("question-title");
+  titleEl.textContent = currentQuestion.title;
+
+  // clear out any old question choices
+  choicesEl.innerHTML = "";
+
+  // loop over choices
+  currentQuestion.choices.forEach(function(choice, i) {
+    // create new button for each choice
+    var choiceNode = document.createElement("button");
+    choiceNode.setAttribute("class", "choice");
+    choiceNode.setAttribute("value", choice);
+
+    choiceNode.textContent = i + 1 + ". " + choice;
+
+    // attach click event listener to each choice
+    choiceNode.onclick = questionClick;
+
+    // display on the page
+    choicesEl.appendChild(choiceNode);
+  });
 }
 
-var question3 = {
-Qtitle: "What markup language acts as the framework for a web page?",
-    optionA: "CSS",
-    optionB: "JavaScript",
-    optionC: "HTML",
-    optionD: "API",
-    correctAnswer: "C"
+function questionClick() {
+  // check if user guessed wrong
+  if (this.value !== questions[currentQuestionIndex].answer) {
+    // penalize time
+    time -= 15;
+
+    if (time < 0) {
+      time = 0;
+    }
+
+    // display new time on page
+    timerEl.textContent = time;
+
+    // play "wrong" sound effect
+    sfxWrong.play();
+
+    feedbackEl.textContent = "Wrong!";
+  } else {
+    // play "right" sound effect
+    sfxRight.play();
+
+    feedbackEl.textContent = "Correct!";
+  }
+
+  // flash right/wrong feedback on page for half a second
+  feedbackEl.setAttribute("class", "feedback");
+  setTimeout(function() {
+    feedbackEl.setAttribute("class", "feedback hide");
+  }, 1000);
+
+  // move to next question
+  currentQuestionIndex++;
+
+  // check if we've run out of questions
+  if (currentQuestionIndex === questions.length) {
+    quizEnd();
+  } else {
+    getQuestion();
+  }
 }
 
-var question4 = {
-Qtitle: "Which of these is a scripting language?",
-    optionA: "html",
-    optionB: "css",
-    optionC: "english",
-    optionD: "javascript",
-    correctAnswer: "D"
+function quizEnd() {
+  // stop timer
+  clearInterval(timerId);
+
+  // show end screen
+  var endScreenEl = document.getElementById("end-screen");
+  endScreenEl.removeAttribute("class");
+
+  // show final score
+  var finalScoreEl = document.getElementById("final-score");
+  finalScoreEl.textContent = time;
+
+  // hide questions section
+  questionsEl.setAttribute("class", "hide");
 }
 
-var currentQuestion = document.querySelector(".questionText");      
-document.querySelector(".questionText").innerHTML = question1.Qtitle
-document.querySelector(".optionBtn1").onclick = function(){
-console.log('Btn 1 success!')
-if(currentQuestion.innerHTML == question1.Qtitle){
-alert("correct!")
-currentQuestion.innerHTML = question2.Qtitle
-document.querySelector(".optionBtn1").innerHTML = question2.optionA
-document.querySelector(".optionBtn2").innerHTML = question2.optionB
-document.querySelector(".optionBtn3").innerHTML = question2.optionC
-document.querySelector(".optionBtn4").innerHTML = question2.optionD
+function clockTick() {
+  // update time
+  time--;
+  timerEl.textContent = time;
+
+  // check if user ran out of time
+  if (time <= 0) {
+    quizEnd();
+  }
 }
-else if(currentQuestion.innerHTML == question2.Qtitle){
-alert("incorrect!")
-currentQuestion.innerHTML = question3.Qtitle
-document.querySelector(".optionBtn1").innerHTML = question3.optionA
-document.querySelector(".optionBtn2").innerHTML = question3.optionB
-document.querySelector(".optionBtn3").innerHTML = question3.optionC
-document.querySelector(".optionBtn4").innerHTML = question3.optionD
+
+function saveHighscore() {
+  // get value of input box
+  var initials = initialsEl.value.trim();
+
+  // make sure value wasn't empty
+  if (initials !== "") {
+    // get saved scores from localstorage, or if not any, set to empty array
+    var highscores =
+      JSON.parse(window.localStorage.getItem("highscores")) || [];
+
+    // format new score object for current user
+    var newScore = {
+      score: time,
+      initials: initials
+    };
+
+    // save to localstorage
+    highscores.push(newScore);
+    window.localStorage.setItem("highscores", JSON.stringify(highscores));
+
+    // redirect to next page
+    window.location.href = "highscores.html";
+  }
 }
-else if(currentQuestion.innerHTML == question3.Qtitle){
-alert("incorrect!")
-currentQuestion.innerHTML = question4.Qtitle
-document.querySelector(".optionBtn1").innerHTML = question4.optionA
-document.querySelector(".optionBtn2").innerHTML = question4.optionB
-document.querySelector(".optionBtn3").innerHTML = question4.optionC
-document.querySelector(".optionBtn4").innerHTML = question4.optionD
+
+function checkForEnter(event) {
+  // "13" represents the enter key
+  if (event.key === "Enter") {
+    saveHighscore();
+  }
 }
-else if(currentQuestion.innerHTML == question4.Qtitle){
-alert("incorrect!")
-alert("All done!")
-window.location.href = './index.html'
+
+// user clicks button to submit initials
+submitBtn.onclick = saveHighscore;
+
+// user clicks button to start quiz
+startBtn.onclick = startQuiz;
+
+initialsEl.onkeyup = checkForEnter;
+
+function printHighscores() {
+  // either get scores from localstorage or set to empty array
+  var highscores = JSON.parse(window.localStorage.getItem("highscores")) || [];
+
+  // sort highscores by score property in descending order
+  highscores.sort(function(a, b) {
+    return b.score - a.score;
+  });
+
+  highscores.forEach(function(score) {
+    // create li tag for each high score
+    var liTag = document.createElement("li");
+    liTag.textContent = score.initials + " - " + score.score;
+
+    // display on page
+    var olEl = document.getElementById("highscores");
+    olEl.appendChild(liTag);
+  });
 }
+
+function clearHighscores() {
+  window.localStorage.removeItem("highscores");
+  window.location.reload();
 }
-document.querySelector(".optionBtn2").onclick = function(){
-console.log('Btn 2 success!')
-if(currentQuestion.innerHTML == question1.Qtitle){
-alert("incorrect!")
-currentQuestion.innerHTML = question2.Qtitle
-document.querySelector(".optionBtn1").innerHTML = question2.optionA
-document.querySelector(".optionBtn2").innerHTML = question2.optionB
-document.querySelector(".optionBtn3").innerHTML = question2.optionC
-document.querySelector(".optionBtn4").innerHTML = question2.optionD
-}
-else if(currentQuestion.innerHTML == question2.Qtitle){
-alert("correct!")
-currentQuestion.innerHTML = question3.Qtitle
-document.querySelector(".optionBtn1").innerHTML = question3.optionA
-document.querySelector(".optionBtn2").innerHTML = question3.optionB
-document.querySelector(".optionBtn3").innerHTML = question3.optionC
-document.querySelector(".optionBtn4").innerHTML = question3.optionD
-}
-else if(currentQuestion.innerHTML == question3.Qtitle){
-alert("incorrect!")
-currentQuestion.innerHTML = question4.Qtitle
-document.querySelector(".optionBtn1").innerHTML = question4.optionA
-document.querySelector(".optionBtn2").innerHTML = question4.optionB
-document.querySelector(".optionBtn3").innerHTML = question4.optionC
-document.querySelector(".optionBtn4").innerHTML = question4.optionD
-}
-else if(currentQuestion.innerHTML == question4.Qtitle){
-alert("incorrect!")
-alert("All done!")
-window.location.href = './index.html'
-}
-}
-document.querySelector(".optionBtn3").onclick = function(){
-console.log('Btn 3 success!')
-if(currentQuestion.innerHTML == question1.Qtitle){
-alert("incorrect!")
-currentQuestion.innerHTML = question2.Qtitle
-document.querySelector(".optionBtn1").innerHTML = question2.optionA
-document.querySelector(".optionBtn2").innerHTML = question2.optionB
-document.querySelector(".optionBtn3").innerHTML = question2.optionC
-document.querySelector(".optionBtn4").innerHTML = question2.optionD
-}
-else if(currentQuestion.innerHTML == question2.Qtitle){
-alert("incorrect!")
-currentQuestion.innerHTML = question3.Qtitle
-document.querySelector(".optionBtn1").innerHTML = question3.optionA
-document.querySelector(".optionBtn2").innerHTML = question3.optionB
-document.querySelector(".optionBtn3").innerHTML = question3.optionC
-document.querySelector(".optionBtn4").innerHTML = question3.optionD
-}
-else if(currentQuestion.innerHTML == question3.Qtitle){
-alert("correct!")
-currentQuestion.innerHTML = question4.Qtitle
-document.querySelector(".optionBtn1").innerHTML = question4.optionA
-document.querySelector(".optionBtn2").innerHTML = question4.optionB
-document.querySelector(".optionBtn3").innerHTML = question4.optionC
-document.querySelector(".optionBtn4").innerHTML = question4.optionD
-}
-else if(currentQuestion.innerHTML == question4.Qtitle){
-alert("incorrect!")
-alert("All done!")
-window.location.href = './index.html'
-}
-}
-document.querySelector(".optionBtn4").onclick = function(){
-console.log('Btn 4 success!')
-if(currentQuestion.innerHTML == question1.Qtitle){
-alert("correct!")
-currentQuestion.innerHTML = question2.Qtitle
-document.querySelector(".optionBtn1").innerHTML = question2.optionA
-document.querySelector(".optionBtn2").innerHTML = question2.optionB
-document.querySelector(".optionBtn3").innerHTML = question2.optionC
-document.querySelector(".optionBtn4").innerHTML = question2.optionD
-}
-else if(currentQuestion.innerHTML == question2.Qtitle){
-alert("correct!")
-currentQuestion.innerHTML = question3.Qtitle
-document.querySelector(".optionBtn1").innerHTML = question3.optionA
-document.querySelector(".optionBtn2").innerHTML = question3.optionB
-document.querySelector(".optionBtn3").innerHTML = question3.optionC
-document.querySelector(".optionBtn4").innerHTML = question3.optionD
-}
-else if(currentQuestion.innerHTML == question3.Qtitle){
-alert("correct!")
-currentQuestion.innerHTML = question4.Qtitle
-document.querySelector(".optionBtn1").innerHTML = question4.optionA
-document.querySelector(".optionBtn2").innerHTML = question4.optionB
-document.querySelector(".optionBtn3").innerHTML = question4.optionC
-document.querySelector(".optionBtn4").innerHTML = question4.optionD
-}
-else if(currentQuestion.innerHTML == question4.Qtitle){
-alert("correct!")
-alert("All done!")
-window.location.href = './index.html'
-}
-}
+
+document.getElementById("clear").onclick = clearHighscores;
+
+// run function when page loads
+printHighscores();
