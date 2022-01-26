@@ -37,7 +37,7 @@ function getQuestion() {
   var titleEl = document.getElementById("question-title");
   titleEl.textContent = currentQuestion.title;
 
-  // clear out any old question choices
+  // clear out any old question choice
   choicesEl.innerHTML = "";
 
   // loop over choices
